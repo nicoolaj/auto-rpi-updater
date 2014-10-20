@@ -1,36 +1,112 @@
 #!/bin/bash
 
-fctcheck-apt-upd(){
-	apt-get update
+declare -a on_exit_items
+on_exit(){
+    for i in "${on_exit_items[@]}"
+    do
+        echo "on_exit: $i"
+        eval $i
+    done
 }
 
-fctdownload-apt(){
+add_on_exit(){
+    local n=${#on_exit_items[*]}
+    on_exit_items[$n]="$*"
+    if [[ $n -eq 0 ]]; then
+        #echo "Setting trap"
+        trap on_exit EXIT
+    fi
+}
+
+fctcheck_apt_upd(){
+	apt-get update 2>&1 >/dev/null
+	if [ $? != 0 ] ; then
+		echo "An error occured in fctcheck_apt_upd"
+	else
+		fctdownload_apt
+	fi
+}
+
+fctdownload_apt(){
 	apt-get dist-upgrade -d -y 2>&1 >/dev/null
 }
 
-fcthelp(){
-	echo -e "Usage: $0 [MODE]"
-	echo -e " possible MODE toggle :"
-	echo -e " * afetch [A]"
-	echo -e "   gpull [I]"
-	echo -e "   ainstall [ÃI]"
-	echo -e ".  total [I]"
-	echo -e "\n   [I] = interactive mode"
-	echo -e "   [A] = automatic mode"
+fctapt_install(){
+	apt-get upgrade -y
 }
 
+fctafetch(){
+	fctcheck_apt_upd 
+}
+
+fctsrc_folder_gitlisting(){
+	cd $SRC_FOLDER
+	add_on_exit rm -f /tmp/gitlisting.$$
+	add_on_exit rm -f /tmp/tmplisting.$$
+	ls -d -1 -a */.git > /tmp/tmplisting.$$
+	sed 's/\.git//' </tmp/tmplisting.$$ >/tmp/gitlisting.$$
+}
+
+fctgpull(){
+	fctsrc_folder_gitlisting
+	while read line; do
+		if [ $line != "auto-rpi-updater" ] ; then
+			cd $SRC_FOLDER/$line
+			pwd
+			git pull
+		fi
+	done </tmp/gitlisting.$$ 
+}
+
+fcthelp(){
+	echo "Usage: $0 [MODE]"
+	echo " possible MODE toggle :"
+	echo " * afetch [A]"
+	echo "   gpull [I]"
+	echo "   ainstall [ÃI]"
+	echo "   total [I]"
+	echo ""
+	echo "   [I] = interactive mode"
+	echo "   [A] = automatic mode"
+}
 
 main(){
-	case $1
+	if [ $# -eq 1 ] ; then
+		DEFAULT_ACTION=$1
+		echo "forcing DefAct = $DEFAULT_ACTION"
+	fi
+	case $DEFAULT_ACTION in
 		afetch)
-		echo afetch
-		;
+			fctafetch
+		;;
 		gpull)
-		echo gpull
-		;
+			fctgpull
+		;;
+		ainstall)
+			fctafetch
+			fctapt_install
+		;;
+		total)
+			fctafetch
+			fctapt_install
+			fctgpull
+		;;
 		help)
-		fcthelp
-		;
+			fcthelp
+		;;
 	esac
 }
+
+SCRIPTFULLPATH=$(readlink -f $0)
+SCRIPTPATH=`dirname $SCRIPTFULLPATH`
+ORIGINAL_FOLDER=`pwd`
+
+SRC_FOLDER="/usr/src"
+DEFAULT_ACTION="afetch"
+if [ -f $SCRIPTPATH/config ] ; then
+	# Override previous settings
+	 . $SCRIPTPATH/config
+fi
 main $@
+on_exit
+cd $ORIGINAL_FOLDER
