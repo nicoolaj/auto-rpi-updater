@@ -95,7 +95,9 @@ main(){
 			fctafetch
 			fctapt_install
 			fctgpull
-			rpi-update
+			if [ $SPECIFIC_HARD -eq "raspberrypi" ] ; then
+				rpi-update
+			fi
 		;;
 		help)
 			fcthelp
@@ -109,6 +111,7 @@ ORIGINAL_FOLDER=`pwd`
 
 SRC_FOLDER="/usr/src"
 DEFAULT_ACTION="afetch"
+SPECIFIC_HARD="raspberrypi"
 if [ -f $SCRIPTPATH/config ] ; then
 	# Override previous settings
 	 . $SCRIPTPATH/config
