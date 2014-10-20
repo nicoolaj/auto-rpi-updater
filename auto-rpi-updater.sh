@@ -4,7 +4,7 @@ declare -a on_exit_items
 on_exit(){
     for i in "${on_exit_items[@]}"
     do
-        echo "on_exit: $i"
+        #echo "on_exit: $i"
         eval $i
     done
 }
@@ -50,7 +50,8 @@ fctsrc_folder_gitlisting(){
 fctgpull(){
 	fctsrc_folder_gitlisting
 	while read line; do
-		if [ $line != "auto-rpi-updater" ] ; then
+		#disable self update
+		if [ "$SRC_FOLDER/$line" != "$SCRIPTPATH/" ] ; then
 			cd $SRC_FOLDER/$line
 			pwd
 			git pull
@@ -62,6 +63,7 @@ fcthelp(){
 	echo "Usage: $0 [MODE]"
 	echo " possible MODE toggle :"
 	echo " * afetch [A]"
+	echo "   rpiupd [A]"
 	echo "   gpull [I]"
 	echo "   ainstall [ÃI]"
 	echo "   total [I]"
@@ -86,10 +88,14 @@ main(){
 			fctafetch
 			fctapt_install
 		;;
+		rpiupd)
+			rpi-update
+		;;
 		total)
 			fctafetch
 			fctapt_install
 			fctgpull
+			rpi-update
 		;;
 		help)
 			fcthelp

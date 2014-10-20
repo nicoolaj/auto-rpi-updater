@@ -1,1 +1,5 @@
-bash auto-rpi-updater.sh
+automatic debian and git updater
+
+
+Execution under root :
+	bash auto-rpi-updater.sh [options]
