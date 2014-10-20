@@ -1,5 +1,5 @@
 automatic debian and git updater
-
+option for raspberry firmware
 
 Execution under root :
 	bash auto-rpi-updater.sh [options]
