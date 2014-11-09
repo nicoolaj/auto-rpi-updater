@@ -95,7 +95,7 @@ main(){
 			fctafetch
 			fctapt_install
 			fctgpull
-			if [ $SPECIFIC_HARD -eq "raspberrypi" ] ; then
+			if [ "$SPECIFIC_HARD" = "raspberrypi" ] ; then
 				rpi-update
 			fi
 		;;
